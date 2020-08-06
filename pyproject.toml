@@ -1,11 +1,12 @@
 [tool.poetry]
 name = "aiosalesforce"
 version = "0.1.0"
-description = ""
+description = "Asyncio POC for the Salesforce REST API"
 authors = ["Jonathan Bowman <git@bowmanjd.com>"]
+license = "Apache-2.0"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.7"
 httpx = "^0.13.3"
 
 [tool.poetry.dev-dependencies]
