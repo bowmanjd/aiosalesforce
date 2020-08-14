@@ -7,11 +7,16 @@ license = "Apache-2.0"
 
 [tool.poetry.dependencies]
 python = "^3.7"
-httpx = "^0.13.3"
+httpx = {extras = ["http2"], version = "^0.14.1"}
 
 [tool.poetry.dev-dependencies]
-pytest = "^5.2"
+pytest = "^6.0.1"
+pytest_httpx = "^0.7.0"
+ptpython = "^3.0.5"
 
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
+
+[tool.poetry.scripts]
+aiosfmarklet = "aiosalesforce.bookmarklet:run"
