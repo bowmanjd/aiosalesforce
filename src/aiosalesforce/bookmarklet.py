@@ -1,4 +1,6 @@
 import importlib.resources
+import webbrowser
+import sys
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 # javascript:(() => {let apipath='/services/data/'; if (location.pathname === apipath) {let sessid = (';' + document.cookie).split("; sid=")[1].split("; ")[0]; let domain = location.host; let output = JSON.stringify([domain,sessid]); navigator.clipboard.writeText(output);} else {window.open(location.origin + apipath, "_blank");}})();
@@ -28,6 +30,12 @@ class Marklet(BaseHTTPRequestHandler):
 
 
 def run():
-    server = HTTPServer(("", 8888), Marklet)
-    print("Go to http://localhost:8888 to install bookmarklet")
+    if len(sys.argv) > 1:
+        address, port = sys.argv[1].split(":")
+        port = int(port)
+    else:
+        address = "localhost"
+        port = 8888
+    server = HTTPServer((address, port), Marklet)
+    print(f"Go to\nhttp://{address}:{port}\nto install bookmarklet")
     server.handle_request()
