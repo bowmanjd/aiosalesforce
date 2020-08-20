@@ -1,32 +1,32 @@
+"""Salesforce Session ID Bookmarklet Helper."""
 import importlib.resources
-import webbrowser
 import sys
-from http.server import HTTPServer, BaseHTTPRequestHandler
-
-# javascript:(() => {let apipath='/services/data/'; if (location.pathname === apipath) {let sessid = (';' + document.cookie).split("; sid=")[1].split("; ")[0]; let domain = location.host; let output = JSON.stringify([domain,sessid]); navigator.clipboard.writeText(output);} else {window.open(location.origin + apipath, "_blank");}})();
-
-HTML = ()
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 
 def bookmarklet():
-    js = importlib.resources.read_text(__package__, "bookmarklet.js")
-    return f"javascript:{js}"
+    """Reads the Javascript file and returns the full bookmarklet.
+
+    Returns:
+        The contents of the bookmarklet, ready to be installed
+    """
+    snippet = importlib.resources.read_text(__package__, "bookmarklet.js")
+    return f"javascript:{snippet}"
 
 
 def html():
     return importlib.resources.read_text(__package__, "bookmarklet.html")
 
 
-class Marklet(BaseHTTPRequestHandler):
-    def do_GET(s):
-        js = bookmarklet()
-        # marklet = "".join(js.split())
-        marklet = js.replace("\n", "").replace("  ", "")
-        content = html().format(marklet=marklet, js=js)
-        s.send_response(200)
-        s.send_header("Content-type", "text/html")
-        s.end_headers()
-        s.wfile.write(content.encode())
+class BookmarkletServer(BaseHTTPRequestHandler):
+    def do_GET(self):
+        javascript = bookmarklet()
+        marklet = javascript.replace("\n", "").replace("  ", "")
+        content = html().format(marklet=marklet, javascript=javascript)
+        self.send_response(200)
+        self.send_header("Content-type", "text/html")
+        self.end_headers()
+        self.wfile.write(content.encode())
 
 
 def run():
@@ -36,6 +36,6 @@ def run():
     else:
         address = "localhost"
         port = 8888
-    server = HTTPServer((address, port), Marklet)
+    server = HTTPServer((address, port), BookmarkletServer)
     print(f"Go to\nhttp://{address}:{port}\nto install bookmarklet")
     server.handle_request()

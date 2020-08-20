@@ -1,17 +1,18 @@
 """Manage Salesforce domain and Session ID."""
 
-# For each active ARB in SF, see if an active ARB exists in Authorize.net, and if dates match (Jan 1 through Dec 31)
-# Are there active ARBs in Authorize.net that are not recorded in SF?
-
+import json
 import pathlib
 import tempfile
-from functools import lru_cache
-
 
 SESSION_DIR = pathlib.Path(tempfile.gettempdir(), "aiosalesforce")
 
 
 def destroy(session_path):
+    """Zero fill and delete specified session file.
+
+    Args:
+        session_path: path to session file
+    """
     with session_path.open("wb") as handle:
         handle.seek(150)
         handle.write(b"\0")
@@ -19,60 +20,60 @@ def destroy(session_path):
 
 
 def destroy_all():
+    """Destroy all session files found."""
     for session_path in list_all():
         destroy(session_path)
 
 
-def filepath(domain):
+def file_path(domain):
+    """Get path to session file for this domain.
+
+    Args:
+        domain: Salesforce domain for API access
+
+    Returns:
+        Path to file
+    """
     return SESSION_DIR / f"{domain}.session"
 
 
 def read(domain):
-    return filepath(domain).read_text()
+    """Get Session ID for this domain.
+
+    Args:
+        domain: Salesforce domain for API access
+
+    Returns:
+        Session ID
+    """
+    return file_path(domain).read_text()
 
 
 def list_all():
+    """List all session files.
+
+    Returns:
+        List of file paths
+    """
     return SESSION_DIR.glob("*.session")
 
 
 def prompt():
-    """Credential entry helper"""
-    creds_json = input('Enter ["domain", "session_id"]: ')
-    creds = json.loads(creds_json)
-    return creds
+    """Credential entry helper.
+
+    Returns:
+        credentials
+    """
+    credentials_json = input('Enter ["domain", "session_id"]: ')
+    credentials = json.loads(credentials_json)
+    return credentials
 
 
 def write(domain, session_id):
-    filepath(domain).write_text(session_id)
+    """Create/update session file with Session ID.
 
-
-def get_creds(domain, refresh=False):
-    """Get credentials from file or input, and test"""
-    sesspath = Path("logs") / "recent_session.json"
-    pathlib.Path(tempfile.gettempdir()) / "sfsessions"
-
-    creds = []
-    if refresh:
-        creds = input_creds()
-        with sesspath.open("w") as handle:
-            json.dump(creds, handle)
-    else:
-        try:
-            with sesspath.open() as handle:
-                creds = json.load(handle)
-        except FileNotFoundError:
-            creds = get_creds(True)
-    return creds
-
-
-@lru_cache(maxsize=4)
-def sf_connect(api_version="48.0"):
-    """Return a connection to SF org"""
-    domain, sess_id = get_creds()
-    connection = Salesforce(instance=domain, session_id=sess_id, version=api_version)
-    try:
-        connection.restful("")
-    except SalesforceExpiredSession:
-        get_creds(True)
-        connection = sf_connect()
-    return connection
+    Args:
+        domain: Salesforce domain for API access
+        session_id: the Salesforce Session ID to be recorded
+    """
+    file_path(domain).write_text(session_id)
